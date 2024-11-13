@@ -8,7 +8,7 @@ Oncogene Panel Tester for the Identification of Cancer (OPTIC) is a computationa
 
 ## Installation
 OPTIC can be downloaded using the following command:
-`wget....`
+`git clone https://github.com/M-Dunnet/OPTIC.git`
 
 ### Dependencies
 
