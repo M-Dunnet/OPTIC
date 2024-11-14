@@ -124,7 +124,7 @@ OPTIC.py takes MAF files as input. The structure of the MAF is available in the 
 
 #### Filter Options
     --cosmic_mutants       # Path string to the location of the COSMIC filter file. Only mutations within the filter file will be anaylsed.
-    --numGenes, -n         # Maximum number of genes to use in the analysis. Deafults to 25, maximum of 50`
+    --numGenes, -n         # Maximum number of genes to use in the analysis. Deafults to 25`
     --numClusterGenes, -c  # Maximum number of genes to examine during hierarchial clustering. Defaults to 250. Note this number cannot be lower than numGenes.`
     --save_zeros, -z       # Boolean option to save a list of all samples that do not contain mutations in the gene set`
     --use_cds              # Boolean option, if set OPTIC will use CDS changes rather than amino acid changes`
