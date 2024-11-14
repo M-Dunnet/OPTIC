@@ -15,8 +15,6 @@ def gene_set_coverage(args, data_matrix, output_modifier=''):
     Creates a line plot of the number of genes in a panel vs total set coverage (%).
     Uses a greedy set coverage algorithm (from function: greedy_set_cover) .
     """
-	if args.numGenes > 50:
-		args.numGene = 50
 	if len(data_matrix.index) > args.numGenes:
 		data_matrix = data_matrix.head(args.numGenes)
 	
@@ -148,8 +146,6 @@ def plot_column_sums(args, data_matrix, output_modifier=''):
     'data_matrix' is a binary array as a pd.DataFrame; columns=sample, rows=genes. '1' indicates that
     gene X is mutated in sample Y, '0' indicates that it is not.
     """
-	if args.numGenes > 50:
-		args.numGene = 50
 	if len(data_matrix.index) > args.numGenes:
 		data_matrix = data_matrix.head(args.numGenes)
 	
