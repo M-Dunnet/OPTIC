@@ -41,7 +41,7 @@ def parse_args():
                         help='Path string to the location of the cosmic mutant census file. Only mutations in the cosmic mutation census'
                              ' will be analysed')
     parser.add_argument('--numGenes', '-n', type=int, action='store', default=25,
-                        help='Maximum number of genes to examine for the mutation matrix, set-cover, and joint occurrence matrix. Defaults to 25, maximum of 50')
+                        help='Maximum number of genes to examine for the mutation matrix, set-cover, and joint occurrence matrix. Defaults to 25')
     parser.add_argument('--numClusterGenes', '-c', type=int, action='store', default=250,
                         help='Maximum number of genes to examine during hierarchial clustering. Defaults to 250. Note this number cannot be lower than numGenes.')
     parser.add_argument('--save_zeros', '-z', default=False, action='store_true',
@@ -183,9 +183,6 @@ def all_genes_oncoscan(arg, variants_dict, maf_list, log_file):
     
     print(percentage.to_string(), file=log_file)
     log_file.close()
-    
-    if arg.numGenes > 50:
-        print('The Maximum number of genes has been set too high! --numGenes/-n has now been set to 50.')
     
     return df, sample_id_to_column_header
 
