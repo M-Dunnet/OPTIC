@@ -15,8 +15,10 @@ def gene_set_coverage(args, data_matrix, output_modifier=''):
     Creates a line plot of the number of genes in a panel vs total set coverage (%).
     Uses a greedy set coverage algorithm (from function: greedy_set_cover) .
     """
-	if len(data_matrix.index) > args.numGenes:
-		data_matrix = data_matrix.head(args.numGenes)
+	# if args.numGenes > 50:
+	# 	args.numGene = 50
+	# if len(data_matrix.index) > args.numGenes:
+	# 	data_matrix = data_matrix.head(args.numGenes)
 	
 	gene_number, zero_number, gene_ids = [], [], []
 	gene_number.append(int(0))
@@ -84,7 +86,8 @@ def clusterplot(args, data_matrix, output_modifier=''):
 		height = len(data_matrix) / 2
 		plt.figure(figsize=(8, height))
 	
-	sns.heatmap(data_matrix,
+	sns.clustermap(data_matrix,
+	               row_cluster=False,
 	            cmap='plasma',
 	            cbar=False)
 	plt.xticks([])
@@ -146,6 +149,8 @@ def plot_column_sums(args, data_matrix, output_modifier=''):
     'data_matrix' is a binary array as a pd.DataFrame; columns=sample, rows=genes. '1' indicates that
     gene X is mutated in sample Y, '0' indicates that it is not.
     """
+	if args.numGenes > 50:
+		args.numGene = 50
 	if len(data_matrix.index) > args.numGenes:
 		data_matrix = data_matrix.head(args.numGenes)
 	
@@ -184,8 +189,7 @@ def total_sample_mutations(args, maf_list, output_modifier=''):
 		if item == 0:
 			zero_variant_samples += 1
 	counts = [x for x in counts if x != 0]
-	print(counts)
-	print(f"Zeros: {zero_variant_samples}")
+
 	binwidth = 0.0625
 	bins = np.arange(np.floor(0), np.ceil(6) + binwidth, binwidth)
 	
