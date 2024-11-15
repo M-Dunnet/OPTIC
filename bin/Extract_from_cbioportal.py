@@ -16,7 +16,7 @@ def main(args):
     combined_dataframe = pd.read_csv(args.filename, sep='\t', skiprows=0, low_memory=False)
     dataframe_grouped_by_sample = combined_dataframe.groupby('Tumor_Sample_Barcode')
     for sample_id, group in dataframe_grouped_by_sample:
-        group.to_csv(f"{args.output}{sample_id}.tsv", sep="\t", index=False)
+        group.to_csv(f"{args.output_location}{sample_id}.tsv", sep="\t", index=False)
 
 
 if __name__ == '__main__':
