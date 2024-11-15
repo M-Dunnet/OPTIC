@@ -60,39 +60,39 @@ def parse_args():
 
 
 def targeted_oncoscan(arg, variants_dict, targets, maf_list, log_file):
-	if arg.cosmic_mutants:
-		mutation_types_per_gene = {}
-		all_mutations = []
-		for filename, gene_data in variants_dict.items():
-			for gene, mutation_info in gene_data.items():
-				variants = mutation_info[0]
-				for cds_variant in variants:
-					mutations = str(gene) + '__' + str(cds_variant)
-					all_mutations.append(mutations)
-				
-				mutation_types = mutation_info[1]
-				counter = Counter(mutation_types)
-				if gene not in mutation_types_per_gene:
-					mutation_types_per_gene[gene] = counter
-				else:
-					mutation_types_per_gene[gene] += counter
-		mutation_counts = Counter(all_mutations)
-		
-		with open(arg.output + 'Variant_counts_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as cds_variant_log:
-			print('Gene' + '\t' + 'Variant' + '\t' + 'Count', file=cds_variant_log)
-			for key, value in mutation_counts.items():
-				gene, variant = key.split('__')
-				count = value
-				print(str(gene) + '\t' + str(variant) + '\t' + str(count), file=cds_variant_log)
-		
-		with open(arg.output + 'Variant_types_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_types_log:
-			print('Gene' + '\t' + 'Variant_Type' + '\t' + 'Count', file=variant_types_log)
-			for key, value in mutation_types_per_gene.items():
-				gene = key
-				for variant_type, count in value.items():
-					if variant_type == '':
-						variant_type = 'Not Classified'
-					print(str(gene) + '\t' + str(variant_type) + '\t' + str(count), file=variant_types_log)
+	# if arg.cosmic_mutants:  Counting is going wrong here when there is no filter. Check that filter and no filter have same structure....
+	mutation_types_per_gene = {}
+	all_mutations = []
+	for filename, gene_data in variants_dict.items():
+		for gene, mutation_info in gene_data.items():
+			variants = mutation_info[0]
+			for variant in variants:
+				mutations = str(gene) + '__' + str(variant)
+				all_mutations.append(mutations)
+			
+			mutation_types = mutation_info[1]
+			counter = Counter(mutation_types)
+			if gene not in mutation_types_per_gene:
+				mutation_types_per_gene[gene] = counter
+			else:
+				mutation_types_per_gene[gene] += counter
+	mutation_counts = Counter(all_mutations)
+	
+	with open(arg.output + 'Variant_counts_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as cds_variant_log:
+		print('Gene' + '\t' + 'Variant' + '\t' + 'Count', file=cds_variant_log)
+		for key, value in mutation_counts.items():
+			gene, variant = key.split('__')
+			count = value
+			print(str(gene) + '\t' + str(variant) + '\t' + str(count), file=cds_variant_log)
+	
+	with open(arg.output + 'Variant_types_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_types_log:
+		print('Gene' + '\t' + 'Variant_Type' + '\t' + 'Count', file=variant_types_log)
+		for key, value in mutation_types_per_gene.items():
+			gene = key
+			for variant_type, count in value.items():
+				if variant_type == '':
+					variant_type = 'Not Classified'
+				print(str(gene) + '\t' + str(variant_type) + '\t' + str(count), file=variant_types_log)
 	
 	gene_list = []
 	for gene in targets:
@@ -103,6 +103,7 @@ def targeted_oncoscan(arg, variants_dict, targets, maf_list, log_file):
 			else:
 				sample_list.append(0.0)
 		gene_list.append(sample_list)
+	
 	df = pd.DataFrame(gene_list)
 	sample_ids = list(variants_dict.keys())
 	sample_id_to_column_header = {int(col): sample_ids[col] for col in df.columns}
@@ -121,40 +122,43 @@ def targeted_oncoscan(arg, variants_dict, targets, maf_list, log_file):
 
 
 def all_genes_oncoscan(arg, variants_dict, maf_list, log_file):
-	if arg.cosmic_mutants:
-		mutation_types_per_gene = {}
-		all_mutations = []
-		
-		for filename, gene_data in variants_dict.items():
-			for gene, mutation_info in gene_data.items():
-				variants = mutation_info[0]
-				for variant in variants:
-					mutations = str(gene) + '__' + str(variant)
-					all_mutations.append(mutations)
-				
-				mutation_types = mutation_info[1]
-				counter = Counter(mutation_types)
-				if gene not in mutation_types_per_gene:
-					mutation_types_per_gene[gene] = counter
-				else:
-					mutation_types_per_gene[gene] += counter
-		mutation_counts = Counter(all_mutations)
-		
-		with open(arg.output + 'Variant_counts_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_log:
-			print('Gene' + '\t' + 'Variant' + '\t' + 'Count', file=variant_log)
-			for key, value in mutation_counts.items():
-				gene, variant = key.split('__')
-				count = value
-				print(str(gene) + '\t' + str(variant) + '\t' + str(count), file=variant_log)
-		
-		with open(arg.output + 'Variant_types_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_types_log:
-			print('Gene' + '\t' + 'Variant_Type' + '\t' + 'Count', file=variant_types_log)
-			for key, value in mutation_types_per_gene.items():
-				gene = key
-				for variant_type, count in value.items():
-					if variant_type == '':
-						variant_type = 'Not Classified'
-					print(str(gene) + '\t' + str(variant_type) + '\t' + str(count), file=variant_types_log)
+	mutation_types_per_gene = {}
+	all_mutations = []
+	
+	for filename, gene_data in variants_dict.items():
+		for gene, mutation_info in gene_data.items():
+			variants = mutation_info[0]
+			for variant in variants:
+				mutations = str(gene) + '__' + str(variant)
+				all_mutations.append(mutations)
+			
+			mutation_types = mutation_info[1]
+			counter = Counter(mutation_types)
+			if gene not in mutation_types_per_gene:
+				mutation_types_per_gene[gene] = counter
+			else:
+				mutation_types_per_gene[gene] += counter
+	mutation_counts = Counter(all_mutations)
+	
+	with open(arg.output + 'Variant_counts_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_log:
+		print('Gene' + '\t' + 'Variant' + '\t' + 'Count', file=variant_log)
+		for key, value in mutation_counts.items():
+			if key == 'Hugo_Symbol':
+				continue
+			gene, variant = key.split('__')
+			count = value
+			print(str(gene) + '\t' + str(variant) + '\t' + str(count), file=variant_log)
+	
+	with open(arg.output + 'Variant_types_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_types_log:
+		print('Gene' + '\t' + 'Variant_Type' + '\t' + 'Count', file=variant_types_log)
+		for key, value in mutation_types_per_gene.items():
+			if key == 'Hugo_Symbol':
+				continue
+			gene = key
+			for variant_type, count in value.items():
+				if variant_type == '':
+					variant_type = 'Not Classified'
+				print(str(gene) + '\t' + str(variant_type) + '\t' + str(count), file=variant_types_log)
 	
 	all_genes_list = [gene for value in variants_dict.values() for gene in value.keys()]
 	all_genes_list = set(all_genes_list)
@@ -182,10 +186,7 @@ def all_genes_oncoscan(arg, variants_dict, maf_list, log_file):
 	
 	print(percentage.to_string(), file=log_file)
 	log_file.close()
-	
-	if arg.numGenes > 50:
-		print('The Maximum number of genes has been set too high! --numGenes/-n has now been set to 50.')
-	
+
 	return df, sample_id_to_column_header
 
 
@@ -245,15 +246,16 @@ def main(arg):
 					if columns[10] == 'synonymous_variant':
 						continue
 					if arg.use_cds:
-						raw_sample_variants_dict[i] = [columns[0], columns[5], columns[11], columns[13], columns[34]]
+						raw_sample_variants_dict[i] = [columns[0], columns[5], columns[11], columns[13], columns[34], columns[8]]
 					else:
-						raw_sample_variants_dict[i] = [columns[0], columns[5], columns[11], columns[13], columns[39]]
+						raw_sample_variants_dict[i] = [columns[0], columns[5], columns[11], columns[13], columns[39], columns[8]]
 					# columns[0] = Gene,
 					# columns[5] = Position,
 					# columns[11] = Reference allele,
 					# columns[13] = Alternate allele,
 					# columns[34] = Variant CDS (only used when --use_cds is applied)
 					# columns[39] = variant amino acid change
+					# columns[8] = variant type
 		
 		if arg.cosmic_mutants:
 			cosmic_mutants = pd.read_csv(arg.cosmic_mutants, sep='\t')
@@ -312,17 +314,20 @@ def main(arg):
 			
 			mutation_dict.update(gene_dict)
 		
-		else:
+		else: # used when there is no filter file provided
 			sample_variants_df = pd.DataFrame.from_dict(raw_sample_variants_dict, orient='index')
-			sample_variants_df.columns = ['Gene_ID', 'Position', 'Reference_allele', 'Alternate_allele', 'Variant']
+			sample_variants_df.columns = ['Gene_ID', 'Position', 'Reference_allele', 'Alternate_allele', 'Variant', 'Variant_type']
 			for index, row in sample_variants_df.iterrows():
 				gene_id = row['Gene_ID']
 				variant = row['Variant']
+				variant_class = row['Variant_type']
 				
 				if gene_id not in processed_sample_variants_dict:
-					processed_sample_variants_dict[gene_id] = ([variant])
+					processed_sample_variants_dict[gene_id] = ([variant], [variant_class])
 				else:
-					processed_sample_variants_dict[gene_id].append(variant)
+					processed_sample_variants_dict[gene_id][0].append(variant)
+					processed_sample_variants_dict[gene_id][1].append(variant_class)
+			
 			if arg.targets:
 				processed_sample_variants_dict = {key: value for key, value in processed_sample_variants_dict.items() if key in targets}
 				gene_dict = {file: processed_sample_variants_dict}  # switch file/number
