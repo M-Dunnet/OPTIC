@@ -1,0 +1,42 @@
+# OPTIC Config file
+# This config file provides OPTIC with the information it needs to analyse mutation annotation format files
+# Each configuration  is on its own line, with the configuration name and value separated by a tab. A description of each option is listed above
+# Do not change the configuration name or OPTIC won't know what it is.
+# All column numbers are using 0-based indexing, i.e. first column is column 0
+# Some configurations are optional. If you wish to exclude them, add a hash (#) at the beginning of the line.
+#
+# Required: The File Extension of input mutation annotation format files (usually .tsv or .maf)
+File Extension	.tsv
+#
+# Required: The column number for the gene ID (usually with HUGO nomenclature)
+Gene	0
+#
+# Required: The column number for the variant start position
+Start_position	5
+#
+# Required: The column number for the variant reference allele
+Reference Allele	11
+#
+# Required: The column number for the variant alternate allele
+Alternate Allele	12
+#
+# Optional: The column number for the variant CDS annotation (Required if using the argument `--use_cds`)
+Variant CDS	37
+#
+# Required: The column number for the variant amino acid annotation (Optional if using the argument `--use_cds`)
+Variant Amino Acid	39
+#
+# Required: The column number for the variant type or class (e.g. Silent, Missense, RNA)
+Variant Type	9
+#
+# Optional: The column number for a filter column. Use if there is a column with entries you wish to filter out
+Filter Column 1	9
+#
+# Optional: Strings to filter out based on the above column. Required if Filter Column 1 is used
+Filter Column 1 Exclusions	3'Flank, 3'UTR, 5'Flank, 5'UTR, Intron, Silent, RNA
+#
+# The column number for a second filter column. Use if there is a column with entries you wish to filter out
+#Filter Column 2	121
+#
+# Optional: Strings to filter out based on the above column. Required if Filter Column 2 is used
+#Filter Column 2 Exclusions	LOW
