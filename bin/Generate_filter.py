@@ -137,7 +137,7 @@ def main(arg):
 				data_as_dict['Cosmic_Sig'].append(cosmic_sig_tier)
 	
 	final_dataframe = pd.DataFrame(data_as_dict)
-	final_dataframe.to_csv(f"{arg.output}OncoScan_mutations_file_{arg.genome_build}.tsv", sep="\t", index=False)
+	final_dataframe.to_csv(f"{arg.output}OPTIC_mutations_file_{arg.genome_build}.tsv", sep="\t", index=False)
 	
 	
 if __name__ == '__main__':

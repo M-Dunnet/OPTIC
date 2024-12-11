@@ -71,21 +71,25 @@ def clusterplot(args, data_matrix, output_modifier=''):
 	if len(data_matrix.index) > args.numGenes:
 		data_matrix = data_matrix.head(args.numGenes)
 	
-	if args.targets and not args.greedy_coverage:
-		data_matrix = data_matrix.sort_index()
-	
 	data_matrix.to_csv(args.output + output_modifier + 'Mutation_matrix_datafile_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.tsv', sep='\t')
+	
+	# Test 1:
+	weights = 2 ** np.arange(data_matrix.shape[0])[::-1]  # Check the weighting factor is low enough so that integer overflow does not occur
+	weighted_matrix = data_matrix * weights[:, None]
+	column_sums = weighted_matrix.sum(axis=0)
+	sorted_indices = np.argsort(-column_sums)
+	sorted_indices = sorted_indices.tolist()
+	sorted_matrix = data_matrix.iloc[:, sorted_indices]
 	
 	if args.fixed_matrix_width:
 		column_width = 0.025
-		height = len(data_matrix) / 2
-		plt.figure(figsize=(column_width * data_matrix.shape[1], height))
+		height = len(sorted_matrix) / 2
+		plt.figure(figsize=(column_width * sorted_matrix.shape[1], height))
 	else:
-		height = len(data_matrix) / 2
+		height = len(sorted_matrix) / 2
 		plt.figure(figsize=(8, height))
 	
-	sns.clustermap(data_matrix,
-	               row_cluster=False,
+	sns.heatmap(sorted_matrix,
 	            cmap='plasma',
 	            cbar=False)
 	plt.xticks([])
@@ -187,7 +191,7 @@ def total_sample_mutations(args, maf_list, output_modifier=''):
 		if item == 0:
 			zero_variant_samples += 1
 	counts = [x for x in counts if x != 0]
-
+	
 	binwidth = 0.0625
 	bins = np.arange(np.floor(0), np.ceil(6) + binwidth, binwidth)
 	

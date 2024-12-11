@@ -51,7 +51,7 @@ def main(args):
 	print(result)
 	result.fillna('', inplace=True)
 	print(result)
-	result.to_csv(args.output + 'OncoScan_mutations_file_Hotspots.tsv', sep="\t", index=False)
+	result.to_csv(args.output + 'OPTIC_mutations_file_Hotspots.tsv', sep="\t", index=False)
 	
 
 if __name__ == '__main__':

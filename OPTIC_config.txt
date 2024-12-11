@@ -6,7 +6,7 @@
 # Some configurations are optional. If you wish to exclude them, add a hash (#) at the beginning of the line.
 #
 # Required: The File Extension of input mutation annotation format files (usually .tsv or .maf)
-File Extension	.tsv
+File Extension	.maf
 #
 # Required: The column number for the gene ID (usually with HUGO nomenclature)
 Gene	0
@@ -15,28 +15,28 @@ Gene	0
 Start_position	5
 #
 # Required: The column number for the variant reference allele
-Reference Allele	11
+Reference Allele	10
 #
 # Required: The column number for the variant alternate allele
 Alternate Allele	12
 #
 # Optional: The column number for the variant CDS annotation (Required if using the argument `--use_cds`)
-Variant CDS	37
+Variant CDS	34
 #
 # Required: The column number for the variant amino acid annotation (Optional if using the argument `--use_cds`)
-Variant Amino Acid	39
+Variant Amino Acid	36
 #
 # Required: The column number for the variant type or class (e.g. Silent, Missense, RNA)
-Variant Type	9
+Variant Type	8
 #
 # Optional: The column number for a filter column. Use if there is a column with entries you wish to filter out
-Filter Column 1	9
+Filter Column 1	8
 #
 # Optional: Strings to filter out based on the above column. Required if Filter Column 1 is used
 Filter Column 1 Exclusions	3'Flank, 3'UTR, 5'Flank, 5'UTR, Intron, Silent, RNA
 #
 # The column number for a second filter column. Use if there is a column with entries you wish to filter out
-#Filter Column 2	121
+Filter Column 2	121
 #
 # Optional: Strings to filter out based on the above column. Required if Filter Column 2 is used
-#Filter Column 2 Exclusions	LOW
+Filter Column 2 Exclusions	LOW
