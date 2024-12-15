@@ -1,6 +1,6 @@
 # OPTIC Config file
 # This config file provides OPTIC with the information it needs to analyse mutation annotation format files
-# Each configuration  is on its own line, with the configuration name and value separated by a tab. A description of each option is listed above
+# Each configuration is on its own line, with the configuration name and value separated by a tab. A description of each option is listed above
 # Do not change the configuration name or OPTIC won't know what it is.
 # All column numbers are using 0-based indexing, i.e. first column is column 0
 # Some configurations are optional. If you wish to exclude them, add a hash (#) at the beginning of the line.
