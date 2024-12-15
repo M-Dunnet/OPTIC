@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 import seaborn as sns
 from scipy.cluster.hierarchy import dendrogram, linkage
 
@@ -88,14 +89,16 @@ def clusterplot(args, data_matrix, output_modifier=''):
 	else:
 		height = len(sorted_matrix) / 2
 		plt.figure(figsize=(8, height))
-	
+		
+	cmap = LinearSegmentedColormap.from_list("custom_binary", [(0, "#0d0887"), (1, "#d8c362")])
 	sns.heatmap(sorted_matrix,
-	            cmap='plasma',
-	            cbar=False)
+	            cmap=cmap,
+	            cbar=False,
+	            linecolor='black')
 	plt.xticks([])
 	plt.yticks(rotation=0, fontsize=16)
 	plt.tight_layout()
-	
+
 	plt.savefig(args.output + output_modifier + 'Mutation_matrix_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.pdf', format='pdf')
 	plt.close()
 
