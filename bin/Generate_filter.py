@@ -100,7 +100,7 @@ def main(arg):
 					coordinates = cosmic_information[20]
 				else:
 					coordinates = cosmic_information[19]
-				result = re.split('[:\-]', coordinates)
+				result = re.split('[:-]', coordinates)
 				if not result:
 					continue
 				chromosome = result[0]

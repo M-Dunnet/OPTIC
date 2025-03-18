@@ -46,11 +46,8 @@ def main(args):
 	
 	result = pd.concat([result, filtered_hotspots], axis=0)
 	result = result.reset_index(drop=True)
-	print(result)
 	result = result.iloc[:, :13]
-	print(result)
 	result.fillna('', inplace=True)
-	print(result)
 	result.to_csv(args.output + 'OPTIC_mutations_file_Hotspots.tsv', sep="\t", index=False)
 	
 
