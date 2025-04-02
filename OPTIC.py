@@ -5,11 +5,11 @@ Oncogene Panel Tester for the Identification of Cancer (OPTIC) is a computationa
 
 import os
 import sys
-import pandas as pd
 import argparse
 import datetime
 import warnings
 
+import pandas as pd
 
 PATH = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + '/lib/'
 sys.path.append(os.path.abspath(PATH))

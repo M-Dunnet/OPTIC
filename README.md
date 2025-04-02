@@ -142,8 +142,8 @@ The mutation matrix provides a visual identification of which genes are mutated 
 #### Cumulative coverage plots
 The cumulative coverage plot shows the proportion of samples encapsulated by the addition of different genes. Genes are ordered by total mutation frequency, or, if the set coverage algorithm is used, by total sample coverage increase.
 
-#### Joint occurrence matrix
-A joint-occurrence matrix between genes expressed as a percentage. Allows for a visual identification of which genes co-occur. Each cell at the intersection of a row (Gene A) and a column (Gene B) shows the co-occurrence percentage, representing the proportion of samples with a mutation Gene A that also contain a mutation in Gene B.
+#### Co-occurrence matrix
+A co-occurrence and mutual exclusivity matrix between genes. The result is a heatmap of Fisher's exact test p-values with directionality, indicating co-occurrence or mutual exclusivity. 
 
 #### Filtered gene mutations per sample
 Histogram of the number of variants per sample after variant filtering. This only includes genes from either the `--targets` list (if used) or the top number of genes equal to the `--numGenes` argument

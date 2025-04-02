@@ -2,12 +2,16 @@
 Collection of analysis functions to be used in OPTIC.
 """
 import os
+import datetime
+import itertools
+import sys
+
 import pandas as pd
 import numpy as np
-import datetime
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 import seaborn as sns
+from scipy.stats import fisher_exact
 from scipy.cluster.hierarchy import dendrogram, linkage
 
 
@@ -74,7 +78,6 @@ def clusterplot(args, data_matrix, output_modifier=''):
 	
 	data_matrix.to_csv(args.output + output_modifier + 'Mutation_matrix_datafile_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.tsv', sep='\t')
 	
-	# Test 1:
 	weights = 2 ** np.arange(data_matrix.shape[0])[::-1]  # Check the weighting factor is low enough so that integer overflow does not occur
 	weighted_matrix = data_matrix * weights[:, None]
 	column_sums = weighted_matrix.sum(axis=0)
@@ -114,37 +117,72 @@ def joint_occurrence_matrix(args, data_matrix, output_modifier=''):
 	if len(data_matrix.index) > args.numGenes:
 		data_matrix = data_matrix.head(args.numGenes)
 	
-	draw_annotations = True
-	if data_matrix.shape[0] >= 20:
-		draw_annotations = False
-		jo_value_size = 0
-	elif data_matrix.shape[0] > 10:
-		jo_value_size = 6
-	else:
-		jo_value_size = 12
-	
-	max_font_size = 14
-	font_size = min(max_font_size, 200 / len(data_matrix))
-	
-	ind = list(data_matrix.index)
-	co_occurrence_matrix = data_matrix.dot(data_matrix.T)
-	co_occurrence_matrix_diagonal = np.diagonal(co_occurrence_matrix)
-	with np.errstate(divide='ignore', invalid='ignore'):
-		co_occurrence_matrix_percentage = np.nan_to_num(np.true_divide(co_occurrence_matrix, co_occurrence_matrix_diagonal))
-	df = pd.DataFrame(data=co_occurrence_matrix_percentage, columns=ind, index=ind)
-	df.to_csv(args.output + output_modifier + 'Joint_occurence_matrix_datafile_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.tsv', sep='\t')
+	# Init objects
+	data_matrix = data_matrix.T
+	column_names = data_matrix.columns
+	num_features = len(column_names)
+	or_matrix = np.full((num_features, num_features), np.nan)
+	p_matrix = np.full((num_features, num_features), np.nan)
+	significance_matrix = np.full((num_features, num_features), "", dtype=object)
+
+	num_features = data_matrix.shape[1]
+	results = {}
+	for col1, col2 in itertools.combinations(range(num_features), 2):
+		a = np.sum((data_matrix.iloc[:, col1] == 1) & (data_matrix.iloc[:, col2] == 1))
+		b = np.sum((data_matrix.iloc[:, col1] == 1) & (data_matrix.iloc[:, col2] == 0))
+		c = np.sum((data_matrix.iloc[:, col1] == 0) & (data_matrix.iloc[:, col2] == 1))
+		d = np.sum((data_matrix.iloc[:, col1] == 0) & (data_matrix.iloc[:, col2] == 0))
+		table = np.array([[a, b], [c, d]])
+		odds_ratio, p_value = fisher_exact(table)
+		results[(col1, col2)] = {'odds_ratio': odds_ratio, 'p_value': p_value}
+
+	for (col1, col2), res in results.items():
+		or_matrix[col1, col2] = or_matrix[col2, col1] = res["odds_ratio"]  # Symmetric OR values
+		p_matrix[col1, col2] = p_matrix[col2, col1] = res["p_value"]  # Symmetric p-values
+
+		if res["p_value"] < 0.001:
+			significance_matrix[col1, col2] = significance_matrix[col2, col1] = "***"
+		elif res["p_value"] < 0.01:
+			significance_matrix[col1, col2] = significance_matrix[col2, col1] = "**"
+		elif res["p_value"] < 0.05:
+			significance_matrix[col1, col2] = significance_matrix[col2, col1] = "*"
+
+	or_df = pd.DataFrame(or_matrix, index=column_names, columns=column_names)
+	sig_df = pd.DataFrame(significance_matrix, index=column_names, columns=column_names)
+	pval_df = pd.DataFrame(p_matrix, index=column_names, columns=column_names)
+	log_pval_df = -np.log10(pval_df)
+	log_or_df = np.log2(or_df)
+
+	norm = TwoSlopeNorm(vmin=-3, vcenter=0, vmax=3)
+	mask = np.triu(np.ones_like(log_pval_df, dtype=bool))
+	sns.set_style("white")
 	plt.figure(figsize=(8, 6))
-	sns.heatmap(df,
-	            cmap='viridis',
-	            xticklabels=True,
-	            yticklabels=True,
-	            annot=draw_annotations,
-	            annot_kws={'size': jo_value_size},
-	            vmin=0,
-	            vmax=1)
-	plt.yticks(rotation=45, fontsize=font_size)
-	plt.xticks(rotation=45, fontsize=font_size)
-	plt.savefig(args.output + output_modifier + 'Joint_occurrence_matrix_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.pdf', format='pdf')
+
+	ax = sns.heatmap(
+		log_pval_df * np.sign(log_or_df),  # Multiply to encode direction
+		annot=sig_df, annot_kws={"size":12}, fmt="", 
+		cmap="coolwarm", norm=norm, linewidths=0.5, 
+		square=True, mask=mask, cbar=True,
+		cbar_kws={"shrink": 0.5, "aspect": 5, "pad": 0.02}
+	)
+
+	cbar = ax.collections[0].colorbar
+	cbar.set_label(r"$-\log_{10}$(p-value)", fontsize=14)
+	cbar.set_ticks([-3, -2, -1, 0, 1, 2, 3])
+	cbar.set_ticklabels(["-3", "-2", "-1", "0", "1", "2", "3"])
+	cbar.ax.tick_params(labelsize=14)
+	cbar.ax.yaxis.set_label_position("left")
+	cbar.ax.text(0.5, 1.1, "Co-Occurring", fontsize=14, va="bottom", ha="center", transform=cbar.ax.transAxes)
+	cbar.ax.text(0.5, -0.1, "Mutually Exclusive", fontsize=14, va="top", ha="center", transform=cbar.ax.transAxes)
+
+	ax.text(0.55, 0.90, "*   p < 0.05", transform=ax.transAxes, fontsize=14, ha="left")
+	ax.text(0.55, 0.85, "**  p < 0.01", transform=ax.transAxes, fontsize=14, ha="left")
+	ax.text(0.55, 0.80, "*** p < 0.001", transform=ax.transAxes, fontsize=14, ha="left")
+
+
+	plt.savefig(args.output + output_modifier + 'Co-occurrence_matrix_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.pdf', 
+			 format='pdf',
+			 bbox_inches="tight")
 	plt.close()
 
 
