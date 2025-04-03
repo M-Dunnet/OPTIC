@@ -13,7 +13,7 @@ from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
 import seaborn as sns
 from scipy.stats import fisher_exact
 from scipy.cluster.hierarchy import dendrogram, linkage
-
+from statsmodels.stats.multitest import multipletests
 
 def gene_set_coverage(args, data_matrix, output_modifier=''):
 	"""
@@ -108,9 +108,9 @@ def clusterplot(args, data_matrix, output_modifier=''):
 
 def joint_occurrence_matrix(args, data_matrix, output_modifier=''):
 	"""
-   Creates a joint-occurrence matrix between genes expressed as a percentage. Allows for a visual identification of which genes co-occur.
-   'data_matrix' is a binary array as a pd.DataFrame; columns=sample, rows=genes. '1' indicates that
-   gene X is mutated in sample Y, '0' indicates that it is not.
+     co-occurrence and mutual exclusivity matrix between genes. 
+	 The result is a heatmap of Fisher's exact test p-values with directionality, indicating co-occurrence or mutual exclusivity. 
+	 P-values are adjusted for multiple comparisons using Benjamini/Hochberg FDR correction.
    """
 	if args.numGenes > 50:
 		args.numGene = 50
@@ -136,20 +136,30 @@ def joint_occurrence_matrix(args, data_matrix, output_modifier=''):
 		odds_ratio, p_value = fisher_exact(table)
 		results[(col1, col2)] = {'odds_ratio': odds_ratio, 'p_value': p_value}
 
+	p_values = [res['p_value'] for res in results.values()]
+	adjusted_pvals = multipletests(p_values, method='fdr_bh')[1]
+
+	for (key, res), adj_pval in zip(results.items(), adjusted_pvals):
+		res['adjusted_p_value'] = adj_pval
+
+
 	for (col1, col2), res in results.items():
 		or_matrix[col1, col2] = or_matrix[col2, col1] = res["odds_ratio"]  # Symmetric OR values
-		p_matrix[col1, col2] = p_matrix[col2, col1] = res["p_value"]  # Symmetric p-values
+		p_matrix[col1, col2] = p_matrix[col2, col1] = res["adjusted_p_value"]  # Symmetric p-values
 
-		if res["p_value"] < 0.001:
+		if res["adjusted_p_value"] < 0.001:
 			significance_matrix[col1, col2] = significance_matrix[col2, col1] = "***"
-		elif res["p_value"] < 0.01:
+		elif res["adjusted_p_value"] < 0.01:
 			significance_matrix[col1, col2] = significance_matrix[col2, col1] = "**"
-		elif res["p_value"] < 0.05:
+		elif res["adjusted_p_value"] < 0.05:
 			significance_matrix[col1, col2] = significance_matrix[col2, col1] = "*"
 
 	or_df = pd.DataFrame(or_matrix, index=column_names, columns=column_names)
 	sig_df = pd.DataFrame(significance_matrix, index=column_names, columns=column_names)
+	
 	pval_df = pd.DataFrame(p_matrix, index=column_names, columns=column_names)
+	number_of_compairsons = pval_df.shape[0] * pval_df.shape[0]/2 - (0.5*pval_df.shape[0]) 
+
 	log_pval_df = -np.log10(pval_df)
 	log_or_df = np.log2(or_df)
 
