@@ -217,7 +217,7 @@ if __name__ == '__main__':
     os.chdir(args.input)
     date = str(datetime.datetime.now().strftime('%Y-%m-%d'))
     if args.targets:
-        args.output = f'{args.output}Targeted_oncoscan_{date}/'
+        args.output = f'{args.output}Targeted_OPTIC_{date}/'
         if not os.path.exists(args.output):
             os.mkdir(args.output)
     elif args.hierarchial_clustering:
@@ -225,7 +225,7 @@ if __name__ == '__main__':
         if not os.path.exists(args.output):
             os.mkdir(args.output)
     else:
-        args.output = f'{args.output}All_genes_oncoscan_{date}/'
+        args.output = f'{args.output}All_genes_OPTIC_{date}/'
         if not os.path.exists(args.output):
             os.mkdir(args.output)
     
