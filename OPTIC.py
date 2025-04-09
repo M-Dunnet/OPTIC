@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument('--greedy_coverage', action='store_true', default=False,
                         help='Boolean option to run the greedy set coverage algorythm. This will select the subsets of a given gene '
                              'to cover as many samples as possible, prioritizing subsets that cover the most uncovered elements at each step.')
-    parser.add_argument('--hierarchial_clustering', type=int, action='store', default=None,
+    parser.add_argument('--hierarchical_clustering', type=int, action='store', default=None,
                         help='Sets oncoscan to cluster samples by SNP and INDEL profiles. The integer provided sets the number of clusters to analyse')
     
     # Filter options
@@ -46,7 +46,7 @@ def parse_args():
     parser.add_argument('--numGenes', '-n', type=int, action='store', default=25,
                         help='Maximum number of genes to examine for the mutation matrix, set-cover, and joint occurrence matrix. Defaults to 25, maximum of 50')
     parser.add_argument('--numClusterGenes', '-c', type=int, action='store', default=250,
-                        help='Maximum number of genes to examine during hierarchial clustering. Defaults to 250. Note this number cannot be lower than numGenes.')
+                        help='Maximum number of genes to examine during hierarchical clustering. Defaults to 250. Note this number cannot be lower than numGenes.')
     parser.add_argument('--save_zeros', '-z', default=False, action='store_true',
                         help='Boolean option to save a list of all samples that do not contain mutations in the gene set')
     parser.add_argument('--use_cds', default=False, action='store_true',
@@ -159,8 +159,8 @@ def main(arg, input_file_attributes):
     # Analyse Data
     gsc_optic_array = optic_analysis.greedy_set_cover(optic_array, arg.numGenes)
     
-    if args.hierarchial_clustering:
-        optic_analysis.hierarchial_clustering(arg, optic_array, sample_mapping, args.hierarchial_clustering)
+    if args.hierarchical_clustering:
+        optic_analysis.hierarchical_clustering(arg, optic_array, sample_mapping, args.hierarchical_clustering)
     
     elif args.greedy_coverage:
         optic_analysis.clusterplot(arg, gsc_optic_array)
@@ -205,11 +205,11 @@ if __name__ == '__main__':
     if not args.output.endswith('/'):
         args.output = args.output + '/'
     
-    if args.targets and args.hierarchial_clustering:
+    if args.targets and args.hierarchical_clustering:
         print('Error: A targeted list of genes (--targets/-t) and hierarchial clustering (--hierarchial_clustering) cannot be provided simultaneously.')
         sys.exit(1)
     
-    if args.greedy_coverage and args.hierarchial_clustering:
+    if args.greedy_coverage and args.hierarchical_clustering:
         print('Error: The greedy set coverage (--greedy_coverage) algorithm and hierarchial clustering (--hierarchial_clustering) cannot be provided simultaneously.')
         sys.exit(1)
     
@@ -220,8 +220,8 @@ if __name__ == '__main__':
         args.output = f'{args.output}Targeted_OPTIC_{date}/'
         if not os.path.exists(args.output):
             os.mkdir(args.output)
-    elif args.hierarchial_clustering:
-        args.output = f'{args.output}Hierarchial_clustering_{args.hierarchial_clustering}_clusters_{date}/'
+    elif args.hierarchical_clustering:
+        args.output = f'{args.output}Hierarchical_clustering_{args.hierarchical_clustering}_clusters_{date}/'
         if not os.path.exists(args.output):
             os.mkdir(args.output)
     else:
