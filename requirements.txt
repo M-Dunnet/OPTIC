@@ -16,3 +16,4 @@ seaborn
 six
 tzdata
 zipp
+statsmodels
