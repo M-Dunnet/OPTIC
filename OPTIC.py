@@ -37,7 +37,7 @@ def parse_args():
                         help='Boolean option to run the greedy set coverage algorythm. This will select the subsets of a given gene '
                              'to cover as many samples as possible, prioritizing subsets that cover the most uncovered elements at each step.')
     parser.add_argument('--hierarchical_clustering', type=int, action='store', default=None,
-                        help='Sets oncoscan to cluster samples by SNP and INDEL profiles. The integer provided sets the number of clusters to analyse')
+                        help='Sets OPTIC to cluster samples by SNP and INDEL profiles. The integer provided sets the number of clusters to analyse')
     
     # Filter options
     parser.add_argument('--cosmic_mutants', type=str, action='store',
