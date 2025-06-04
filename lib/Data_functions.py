@@ -62,7 +62,7 @@ def count_variant_types(args, variants_dict):
 	all_mutations = []
 	for filename, gene_data in variants_dict.items():
 		for gene, mutation_info in gene_data.items():
-			variants = mutation_info[0]
+			variants = set(mutation_info[0])
 			
 			for variant in variants:
 				mutations = str(gene) + '__' + str(variant)
