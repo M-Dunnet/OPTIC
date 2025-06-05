@@ -50,7 +50,7 @@ def parse_args():
     parser.add_argument('--save_zeros', '-z', default=False, action='store_true',
                         help='Boolean option to save a list of all samples that do not contain mutations in the gene set')
     parser.add_argument('--use_cds', default=False, action='store_true',
-                        help='If set, OPTIC will use CDS changes rather than acid changes')
+                        help='If set, OPTIC will use CDS changes rather than acid changes. Variant CDS must match the COSMIC mutation census.')
     
     # Plotting Options
     parser.add_argument('--fixed_matrix_width', '-f', default=False, action='store_true',
