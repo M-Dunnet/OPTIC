@@ -1,4 +1,10 @@
 #!/bin/bash
+"""
+# This script moves files listed in a TSV file from an input directory to an output directory.
+# Its purpose is to organise files seperated by the hierarchical clustering function of OPTIC
+# Usage: ./move_files.sh <tsv_file> <input_directory> <output_directory>
+"""
+
 
 if [ "$#" -ne 3 ]; then
     echo "Usage: $0 <tsv_file> <input_directory> <output_directory>"

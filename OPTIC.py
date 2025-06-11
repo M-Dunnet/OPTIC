@@ -20,6 +20,7 @@ import Analysis_functions as optic_analysis
 
 
 def parse_args():
+    ## Standard argparse setup for user input on the command line
     parser = argparse.ArgumentParser(description='Assesses the ability of a panel to cover all samples.',
                                      add_help=True,
                                      prefix_chars='-')
@@ -63,6 +64,9 @@ def parse_args():
 
 
 def get_file_info(file):
+    """
+    Reads the input file and extracts relevant information based on the provided attributes.
+    """
     raw_sample_variants_dict = {}
     try:
         with open(file, 'rt') as f:
@@ -99,7 +103,18 @@ def get_file_info(file):
 
 
 def main(arg, input_file_attributes):
-    # Initialize the list of files
+    """
+    Main function to process the input files and generate the OPTIC analysis.
+    - Loads files from the input directory.
+    - Loads the filer file if specified.
+    - Processes each file to extract mutation data; and filters variants based on the cosmic mutation census if provided.
+    - Generates the optic dictionary (mutation dict) for mutation counts and types.
+    - Generates the OPTIC array using the mutation dict.
+    - Performs greedy set cover or hierarchical clustering based on user input.
+    - Generates plots and saves results.
+    """
+
+    ## Initialize the list of files
     maf_list = []
     for maf_file in os.listdir(args.input):
         if maf_file.endswith(input_file_attributes['File Extension']):
@@ -107,6 +122,7 @@ def main(arg, input_file_attributes):
     maf_list = list(set(maf_list))
     maf_list.sort()
     
+    ## Check to see if there are any files in the input folder; close if not.
     if len(maf_list) == 0:
         print(f'Error: There are no {input_file_attributes["File Extension"]} files in input folder... '
               f'Check the correct file extension is provided in the config file')
@@ -135,19 +151,20 @@ def main(arg, input_file_attributes):
     mutation_dict, number = {}, 0
     for file in maf_list:
         number += 1
-        raw_sample_variants_dict = get_file_info(file)
+        raw_sample_variants_dict = get_file_info(file) ## Dictonary holding raw variant information for each sample
         sample_variants_df = pd.DataFrame.from_dict(raw_sample_variants_dict, orient='index')
         sample_variants_df.columns = ['Gene_ID', 'Position', 'Reference_allele', 'Alternate_allele', 'Variant', 'Variant_type']
 
-        gene_dict = optic_data.process_optic_dictionary(args, file, sample_variants_df, cosmic_mutants)
-        mutation_dict.update(gene_dict)
+        gene_dict = optic_data.process_optic_dictionary(args, file, sample_variants_df, cosmic_mutants) ## Filter and prcocess variants for each file
+        mutation_dict.update(gene_dict) ## Convert dict to nested dictionary format for variant counts and variant types
         
         print(f"Finished file {number} of {len(maf_list)} ({round(number / len(maf_list) * 100, 2)}%)", ' ' * 20, end='\r')
     
-    # Process Variants
-    optic_data.count_variant_types(args, mutation_dict)
+    ## Generate binary array
+    ## Dict of dicts, which is used for variant counts and variant types, is now used to generate the OPTIC array
+    optic_data.count_variant_types(args, mutation_dict) 
     if args.targets:
-        optic_array, sample_mapping = optic_data.generate_optic_array(mutation_dict, targets)
+        optic_array, sample_mapping = optic_data.generate_optic_array(mutation_dict, targets) 
     else:
         targets = optic_data.get_gene_ids(mutation_dict)
         optic_array, sample_mapping = optic_data.generate_optic_array(mutation_dict, targets)
@@ -156,7 +173,7 @@ def main(arg, input_file_attributes):
     optic_array = optic_array.iloc[:, :-1]
     optic_data.check_optic_array(optic_array)
     
-    # Analyse Data
+    # Analyse and Plot Data
     gsc_optic_array = optic_analysis.greedy_set_cover(optic_array, arg.numGenes)
     
     if args.hierarchical_clustering:
@@ -191,7 +208,7 @@ if __name__ == '__main__':
     config_reader.validate_config(args)
     input_file_attributes = config_reader.get_attributes()
     
-    # Check arguments are valid
+    ## Check input is valid
     if not args.input:
         print('Error: an input folder (--input/-i) is required', file=sys.stderr)
         sys.exit(1)
@@ -199,21 +216,22 @@ if __name__ == '__main__':
         print('Error: input (--input/-i) is not a directory', file=sys.stderr)
         sys.exit(1)
     
+    ## Check output is valid
     if not args.output:
         print('Error: an output folder (--output/-o) is required', file=sys.stderr)
         sys.exit(1)
     if not args.output.endswith('/'):
         args.output = args.output + '/'
     
+    ## Stop the script if hierarchical_clustering is used with targets or greedy_coverage; these options are mutually exclusive
     if args.targets and args.hierarchical_clustering:
         print('Error: A targeted list of genes (--targets/-t) and hierarchial clustering (--hierarchial_clustering) cannot be provided simultaneously.')
         sys.exit(1)
-    
     if args.greedy_coverage and args.hierarchical_clustering:
         print('Error: The greedy set coverage (--greedy_coverage) algorithm and hierarchial clustering (--hierarchial_clustering) cannot be provided simultaneously.')
         sys.exit(1)
     
-    # Make Output locations
+    ## Make Output locations depending on the type of analysis
     os.chdir(args.input)
     date = str(datetime.datetime.now().strftime('%Y-%m-%d'))
     if args.targets:

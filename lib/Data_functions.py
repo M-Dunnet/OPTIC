@@ -2,16 +2,23 @@
 Collection of functions to be used for data wrangling in OPTIC.
 """
 import sys
-
 import pandas as pd
 import datetime
 from collections import Counter
 
 
 def filter_cosmic_mutants(sample_variants_df, cosmic_mutants):
+	"""
+	Filter the sample variants DataFrame to only include variants that match those in the COSMIC mutants DataFrame.
+	"""
+	## Data is in Pandas DataFrame format, so we can use the merge function to filter
+	## NA in the COSMIC DataFrame is being filled with '-' so that it matches the sample_variants_df
 	cosmic_mutants['GENOMIC_WT_ALLELE'] = cosmic_mutants['GENOMIC_WT_ALLELE'].fillna('-')
 	cosmic_mutants['GENOMIC_MUT_ALLELE'] = cosmic_mutants['GENOMIC_MUT_ALLELE'].fillna('-')
 	
+	## Merge on Gene ID; this leads to multiple mismatched rows, but these will be filtered out later.
+	## Also remove the header row from the merged DataFrame; after merge we end up with a duplicate header row
+	## Poisition is converted to float to ensure that it can be compared correctly
 	merged_df = sample_variants_df.merge(cosmic_mutants,
 	                                     how='left',
 	                                     on='Gene_ID',
@@ -19,9 +26,14 @@ def filter_cosmic_mutants(sample_variants_df, cosmic_mutants):
 	merged_df = merged_df.drop(merged_df.index[0])
 	merged_df['Position'] = merged_df['Position'].astype(float)
 	
+	## Filter the merged DataFrame to only include rows where the Position and Variant match those in the COSMIC DataFrame
+	## This removes mismatched rows where the Position or Variant do not match
 	mask = (merged_df['Position'] == merged_df['Position_cosmic']) | (merged_df['Variant'] == merged_df['Variant_cosmic'])
 	tmp_df_cosmic = merged_df[mask]
 	tmp_df_cosmic.reset_index(drop=True, inplace=True)
+
+	## Filter the DataFrame to only include rows where the Reference and Alternate alleles match those in the COSMIC DataFrame
+	## This further removes mismatched rows where the Reference or Alternate alleles do not match; but position and variant do
 	mask = (tmp_df_cosmic['Reference_allele'] == tmp_df_cosmic['GENOMIC_WT_ALLELE']) & (tmp_df_cosmic['Alternate_allele'] == tmp_df_cosmic['GENOMIC_MUT_ALLELE'])
 	tmp_df_cosmic = tmp_df_cosmic[mask]
 	tmp_df_cosmic = tmp_df_cosmic.drop_duplicates(subset=['Gene_ID', 'Variant'])
@@ -30,11 +42,16 @@ def filter_cosmic_mutants(sample_variants_df, cosmic_mutants):
 
 
 def process_optic_dictionary(args, file, sample_variants_df, cosmic_mutants):
+	"""
+	Process the sample variants DataFrame to create a dictionary of gene IDs and their associated variants and types.
+	"""
+	## Filter first, if a filter file was provided
 	if args.cosmic_mutants:
 		sample_variants_df = filter_cosmic_mutants(sample_variants_df, cosmic_mutants)
 	
+	## Formats the DataFrame to have Gene_ID, Variant, and Variant_type columns
+	## We collect this information for the Variant counts and Variant types files 
 	processed_sample_variants_dict = {}
-
 	for index, row in sample_variants_df.iterrows():
 		gene_id = row['Gene_ID']
 		variant = row['Variant']
@@ -45,19 +62,19 @@ def process_optic_dictionary(args, file, sample_variants_df, cosmic_mutants):
 		else:
 			processed_sample_variants_dict[gene_id][0].append(variant)
 			processed_sample_variants_dict[gene_id][1].append(variant_type)
-		
-		if gene_id not in processed_sample_variants_dict:
-			processed_sample_variants_dict[gene_id] = ([variant], [variant_type])
-		else:
-			processed_sample_variants_dict[gene_id][0].append(variant)
-			processed_sample_variants_dict[gene_id][1].append(variant_type)
 	
+	## Gene dict is returned, for later use in a nested dictionary format
 	gene_dict = {file: processed_sample_variants_dict}
 	
 	return gene_dict
 
 
 def count_variant_types(args, variants_dict):
+	"""
+	Processes the variants dictionary (Nested dictionary made from process_optic_dictionary) to count the number of variants and their types per gene, across all samples.
+	"""
+	## Iterates through each sample, and collects variant counts and variant types
+	## Collect these separately, so that we can write them to different files later
 	mutation_types_per_gene = {}
 	all_mutations = []
 	for filename, gene_data in variants_dict.items():
@@ -78,10 +95,11 @@ def count_variant_types(args, variants_dict):
 	
 	mutation_counts = Counter(all_mutations)
 	
+	## Write the counts to files
 	with open(args.output + 'Variant_counts_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_log:
 		print('Gene' + '\t' + 'Variant' + '\t' + 'Count', file=variant_log)
 		for key, value in mutation_counts.items():
-			if key == 'Hugo_Symbol':
+			if key == 'Hugo_Symbol': ## Exlclude Hugo_Symbol if it is present; this is a header row that is not a gene
 				continue
 			gene, variant = key.split('__')
 			count = value
@@ -90,7 +108,7 @@ def count_variant_types(args, variants_dict):
 	with open(args.output + 'Variant_types_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w') as variant_types_log:
 		print('Gene' + '\t' + 'Variant_Type' + '\t' + 'Count', file=variant_types_log)
 		for key, value in mutation_types_per_gene.items():
-			if key == 'Hugo_Symbol':
+			if key == 'Hugo_Symbol': ## Exlclude Hugo_Symbol if it is present; this is a header row that is not a gene
 				continue
 			gene = key
 			for variant_type, count in value.items():
@@ -100,15 +118,24 @@ def count_variant_types(args, variants_dict):
 
 
 def get_gene_ids(variants_dict):
+	"""
+	Collects all unique gene IDs from the variants dictionary.
+	"""
 	target_genes = [gene for value in variants_dict.values() for gene in value.keys()]
 	target_genes = set(target_genes)
-	if 'Hugo_Symbol' in target_genes:
+	if 'Hugo_Symbol' in target_genes: ## Exlclude Hugo_Symbol if it is present; this is a header row that is not a gene
 		target_genes.remove('Hugo_Symbol')
 	
 	return target_genes
 
 
 def generate_optic_array(variants_dict, targets):
+	"""
+	Generates a binary mutation matrix (OPTIC array) from the variants dictionary.
+	Each row corresponds to a gene, and each column corresponds to a sample.
+	1 indicates the presence of a mutation in that gene for that sample, 0 indicates absence.
+	"""
+	## For each gene, measure if it is mutated in each sample
 	gene_list = []
 	for gene in targets:
 		sample_list = []
@@ -119,17 +146,21 @@ def generate_optic_array(variants_dict, targets):
 				sample_list.append(0.0)
 		gene_list.append(sample_list)
 	
+	## Convert the list of lists into a DataFrame
+	## Dataframe is used because it makes plotting easier later on
 	optic_array = pd.DataFrame(gene_list)
 	sample_ids = list(variants_dict.keys())
 	sample_id_to_column_header = {int(col): sample_ids[col] for col in optic_array.columns}
 	optic_array.index = targets
-	optic_array['Count'] = optic_array.sum(axis=1)
+	optic_array['Count'] = optic_array.sum(axis=1) ## Sorted by the number of mutations per gene
 	optic_array = optic_array.sort_values(by=['Count'], ascending=False)
 	
 	return optic_array, sample_id_to_column_header
 
 
 def get_zero_samples(args, mutation_dict):
+	"""
+	Counts the number of samples with no mutations and saves the list of these samples if requested."""
 	zero_number, zero_list = 0, []
 	for key in mutation_dict.keys():
 		if not mutation_dict[key]:
@@ -144,7 +175,9 @@ def get_zero_samples(args, mutation_dict):
 
 
 def get_total_frequencies(args, variants_dict, optic_array, maf_list):
-	# Initialize Total Gene Mutation Frequencies file
+	"""
+	Calculates and logs the total mutation frequencies across all samples and genes.
+	"""
 	log_file = open(args.output + 'Gene_mutation_frequencies_' + str(datetime.datetime.now().strftime('%Y-%m-%d')) + '.txt', 'w+')
 	zero_number = get_zero_samples(args, variants_dict)
 	percentage = round(optic_array['Count'] / len(maf_list) * 100, 2)
@@ -157,6 +190,9 @@ def get_total_frequencies(args, variants_dict, optic_array, maf_list):
 
 
 def check_optic_array(optic_array):
+	"""
+	Checks if the OPTIC array is empty, which indicates that no valid variants were found.
+	"""
 	if len(optic_array) == 0:
 		print(f"Error: OPTIC has not found any valid variants in the input files. Please check that:\n"
 		      f"\t (1) Columns numbers are correct in the config file\n "
