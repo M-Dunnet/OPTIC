@@ -343,7 +343,7 @@ def greedy_set_cover(data_matrix, size):
 	return cover
 
 
-def hierarchial_clustering(args, data_matrix, sample_mapping, num):
+def hierarchical_clustering(args, data_matrix, sample_mapping, num):
 	"""
     Creates an ordered hierarchical cluster between samples. Allows for a visual identification similarity between samples.
     Will also separate out clusters for individual cluster analysis: provide and INT value for the number of branches desired.
