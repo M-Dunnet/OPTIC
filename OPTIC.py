@@ -86,7 +86,7 @@ def get_file_info(file):
                         'Filter Column 2 Exclusions' in input_file_attributes and
                         columns[input_file_attributes['Filter Column 2']] in input_file_attributes['Filter Column 2 Exclusions']):
                     continue
-                
+
                 variant_key = 'Variant CDS' if args.use_cds else 'Variant Amino Acid'
                 raw_sample_variants_dict[j] = [
                     columns[input_file_attributes['Gene']],
@@ -152,12 +152,16 @@ def main(arg, input_file_attributes):
     for file in maf_list:
         number += 1
         raw_sample_variants_dict = get_file_info(file) ## Dictonary holding raw variant information for each sample
+        if not raw_sample_variants_dict: ## Check if the file is empty (i.e. no variants)
+            mutation_dict[file] = {}
+            continue
+
         sample_variants_df = pd.DataFrame.from_dict(raw_sample_variants_dict, orient='index')
         sample_variants_df.columns = ['Gene_ID', 'Position', 'Reference_allele', 'Alternate_allele', 'Variant', 'Variant_type']
 
         gene_dict = optic_data.process_optic_dictionary(args, file, sample_variants_df, cosmic_mutants) ## Filter and prcocess variants for each file
         mutation_dict.update(gene_dict) ## Convert dict to nested dictionary format for variant counts and variant types
-        
+
         print(f"Finished file {number} of {len(maf_list)} ({round(number / len(maf_list) * 100, 2)}%)", ' ' * 20, end='\r')
     
     ## Generate binary array
